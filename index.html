@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HC Ledger SaaS | Enterprise Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <style>
+        :root { --primary: #002f6c; --accent: #00d2ff; --dark: #1a1a1a; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7fa; }
+        .hero-section { background: linear-gradient(135deg, var(--primary), var(--dark)); color: white; padding: 120px 0; border-bottom: 5px solid var(--accent); }
+        .feature-card { border: none; padding: 40px; border-radius: 25px; transition: 0.4s; background: white; height: 100%; box-shadow: 0 15px 35px rgba(0,0,0,0.05); }
+        .feature-card:hover { transform: translateY(-15px); }
+        .icon-box { width: 70px; height: 70px; background: var(--accent); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 30px; margin-bottom: 25px; color: white; margin: 0 auto 25px auto; }
+        #mainApp, #authPages { display: none; }
+        .navbar { background: var(--primary) !important; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .stat-card { border: none; border-radius: 20px; color: white; padding: 30px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+        .bg-income { background: linear-gradient(45deg, #2ecc71, #27ae60); }
+        .bg-expense { background: linear-gradient(45deg, #e74c3c, #c0392b); }
+        .bg-balance { background: linear-gradient(45deg, #3498db, #2980b9); }
+        .bg-profit { background: linear-gradient(45deg, #9b59b6, #8e44ad); }
+        .tab-content { display: none; animation: fadeIn 0.5s ease; }
+        .active-tab { display: block !important; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div id="landingPage">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-transparent position-absolute w-100">
+        <div class="container">
+            <a class="navbar-brand fw-bold fs-3">MY DAILY LEDGER</a>
+            <button class="btn btn-primary px-4 rounded-pill" onclick="showAuth('login')">Login Now</button>
+        </div>
+    </nav>
+    <div class="hero-section text-center">
+        <div class="container">
+            <h1 class="display-3 fw-bold mb-3">Professional Business <br><span style="color:var(--accent)">Ledger Software</span></h1>
+            <p class="lead mb-5 opacity-75 fs-4">Track Daily Income, Expenses & Staff Records.</p>
+            <button class="btn btn-primary btn-lg px-5 py-3 rounded-pill fw-bold shadow-lg" onclick="showAuth('signup')">Create Your Company Account</button>
+        </div>
+    </div>
+    <div class="container my-5 py-5">
+        <div class="row g-4 text-center">
+            <div class="col-md-4"><div class="feature-card"><div class="icon-box">🏦</div><h4>Multi-Company</h4><p>Creat diffrent account for your business & staff.</p></div></div>
+            <div class="col-md-4"><div class="feature-card"><div class="icon-box">📈</div><h4>Live Charts</h4><p>Income vs Expense graphs.</p></div></div>
+            <div class="col-md-4"><div class="feature-card"><div class="icon-box">📑</div><h4>Excel Sync</h4><p>Download full reports anytime.</p></div></div>
+        </div>
+    </div>
+</div>
+
+<div id="authPages" class="container mt-5 pt-5">
+    <div class="card mx-auto shadow-lg border-0" style="max-width: 480px; border-radius: 25px;">
+        <div class="card-body p-5">
+            <div id="loginForm">
+                <h2 class="fw-bold mb-4 text-center text-primary">Login</h2>
+                <input type="text" id="logUser" class="form-control mb-3" placeholder="Email / Staff User">
+                <input type="password" id="logPass" class="form-control mb-4" placeholder="Password">
+                <button onclick="handleLogin()" class="btn btn-primary w-100 py-3 fw-bold rounded-pill">Enter Dashboard</button>
+                <p class="text-center mt-4">New here? <a href="#" onclick="showAuth('signup')">Register Company</a></p>
+                <button class="btn btn-link w-100 mt-2 text-muted" onclick="location.reload()">Back to Home</button>
+            </div>
+            <div id="signupForm" style="display:none;">
+                <h2 class="fw-bold mb-4 text-center text-success">Register</h2>
+                <input type="text" id="regCo" class="form-control mb-2" placeholder="Company Name">
+                <input type="email" id="regEmail" class="form-control mb-2" placeholder="Admin Email">
+                <input type="password" id="regPass" class="form-control mb-4" placeholder="Password">
+                <button onclick="handleSignup()" class="btn btn-success w-100 py-3 fw-bold rounded-pill">Register Now</button>
+                <p class="text-center mt-4">Registered? <a href="#" onclick="showAuth('login')">Login here</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="mainApp">
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold fs-4" id="coBrand">DASHBOARD</a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#hcNav"><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="hcNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link text-white px-3" onclick="showTab('dashTab')">🏠 Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link text-white px-3" onclick="showTab('addEntryTab')">➕ Add Entry</a></li>
+                    <li class="nav-item admin-only"><a class="nav-link text-white px-3" onclick="showTab('manageStaffTab')">👥 Staff</a></li>
+                </ul>
+                <div class="d-flex gap-2 p-2">
+                    <button onclick="exportExcel()" class="btn btn-light btn-sm fw-bold px-3">📊 Excel</button>
+                    <button onclick="logout()" class="btn btn-danger btn-sm px-3">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div class="container mt-4 pb-5">
+        <div id="dashTab" class="tab-content active-tab">
+            <h4 class="fw-bold mb-4">Welcome, <span id="userName" class="text-primary"></span>!</h4>
+            <div class="row g-3 mb-4 text-center">
+                <div class="col-md-3 col-6"><div class="stat-card bg-income"><h6>Daily Income</h6><h3 id="dInc">₹0</h3></div></div>
+                <div class="col-md-3 col-6"><div class="stat-card bg-expense"><h6>Daily Expense</h6><h3 id="dExp">₹0</h3></div></div>
+                <div class="col-md-3 col-6"><div class="stat-card bg-balance"><h6>Total Balance</h6><h3 id="tBal">₹0</h3></div></div>
+                <div class="col-md-3 col-6"><div class="stat-card bg-profit"><h6>Monthly Profit</h6><h3 id="mProf">₹0</h3></div></div>
+            </div>
+            <div class="row mb-4">
+                <div class="col-md-8 mb-4"><div class="bg-white p-4 rounded-4 shadow-sm border-0"><canvas id="ledgerChart"></canvas></div></div>
+                <div class="col-md-4 mb-4"><div class="bg-white p-4 rounded-4 shadow-sm border-0 h-100"><h6 class="fw-bold mb-3">Recent Activity</h6><div id="recentList" class="small overflow-auto" style="max-height: 400px;"></div></div></div>
+            </div>
+        </div>
+        <div id="addEntryTab" class="tab-content">
+            <div class="card p-4 mx-auto shadow-lg border-0" style="max-width: 600px; border-radius: 25px;">
+                <h3 class="fw-bold mb-4 text-center">New Entry</h3>
+                <input type="text" id="entryDesc" class="form-control mb-3" placeholder="Description">
+                <div class="row mb-4">
+                    <div class="col-6"><input type="number" id="entryAmt" class="form-control" placeholder="Amount"></div>
+                    <div class="col-6"><select id="entryType" class="form-select"><option value="income">Income (+)</option><option value="expense">Expense (-)</option></select></div>
+                </div>
+                <button onclick="submitEntry()" class="btn btn-primary w-100 py-3 fw-bold rounded-pill">Save</button>
+            </div>
+        </div>
+        <div id="manageStaffTab" class="tab-content">
+            <div class="card p-4 border-0 shadow-sm rounded-4">
+                <h4>Manage Staff Accounts</h4>
+                <div class="row g-3 mb-4 mt-2">
+                    <div class="col-md-5"><input type="text" id="sUser" class="form-control" placeholder="Username"></div>
+                    <div class="col-md-5"><input type="text" id="sPass" class="form-control" placeholder="Password"></div>
+                    <div class="col-md-2"><button onclick="addStaff()" class="btn btn-success w-100">Create</button></div>
+                </div>
+                <table class="table align-middle"><tbody id="staffTable"></tbody></table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let companies = JSON.parse(localStorage.getItem('hc_saas_final_db')) || [];
+    let currentCo = null; let user = null; let chartObj = null;
+
+    function showAuth(mode) {
+        document.getElementById('landingPage').style.display = 'none';
+        document.getElementById('authPages').style.display = 'block';
+        document.getElementById('loginForm').style.display = mode === 'login' ? 'block' : 'none';
+        document.getElementById('signupForm').style.display = mode === 'signup' ? 'block' : 'none';
+    }
+
+    function handleSignup() {
+        const co = document.getElementById('regCo').value, em = document.getElementById('regEmail').value, pa = document.getElementById('regPass').value;
+        if(!co || !em || !pa) return alert("Puri details bharo!");
+        companies.push({ id:Date.now(), name:co, email:em, pass:pa, staff:[], entries:[] });
+        localStorage.setItem('hc_saas_final_db', JSON.stringify(companies));
+        alert("Registration Successful!");
+        
+        // FIX: Sign up ton baad form saaf karna
+        document.getElementById('regCo').value = ""; document.getElementById('regEmail').value = ""; document.getElementById('regPass').value = "";
+        
+        showAuth('login');
+    }
+
+    function handleLogin() {
+        const u = document.getElementById('logUser').value, p = document.getElementById('logPass').value;
+        const co = companies.find(c => c.email === u && c.pass === p);
+        if(co) { currentCo = co; user = {name:co.name, role:"admin"}; return startApp(); }
+        for(let c of companies) {
+            const s = c.staff.find(x => x.user === u && x.pass === p);
+            if(s) { currentCo = c; user = {name:s.user, role:"staff"}; return startApp(); }
+        }
+        alert("Invalid Login!");
+    }
+
+    function startApp() {
+        document.getElementById('authPages').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'block';
+        document.getElementById('coBrand').innerText = currentCo.name.toUpperCase();
+        document.getElementById('userName').innerText = currentCo.name;
+        if(user.role !== 'admin') { 
+            document.querySelectorAll('.admin-only').forEach(e => e.remove());
+            document.getElementById('userName').innerText = user.name + " (" + currentCo.name + ")";
+        }
+        showTab('dashTab');
+    }
+
+    function showTab(tId) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active-tab'));
+        document.getElementById(tId).classList.add('active-tab');
+        if(tId === 'dashTab') renderDash();
+        if(tId === 'manageStaffTab') renderStaff();
+        const nav = document.getElementById('hcNav'); if(nav.classList.contains('show')) new bootstrap.Collapse(nav).hide();
+    }
+
+    function submitEntry() {
+        const d = document.getElementById('entryDesc').value, a = parseFloat(document.getElementById('entryAmt').value), t = document.getElementById('entryType').value;
+        if(!d || !a) return;
+        currentCo.entries.push({ date:new Date().toISOString(), desc:d, amt:a, type:t, by:user.name });
+        save(); renderDash(); showTab('dashTab');
+        document.getElementById('entryDesc').value = ''; document.getElementById('entryAmt').value = '';
+    }
+
+    function renderDash() {
+        const today = new Date().toLocaleDateString(); let di=0, de=0, tb=0, mi=0, me=0;
+        const list = document.getElementById('recentList'); list.innerHTML = '';
+        const data = user.role === 'admin' ? currentCo.entries : currentCo.entries.filter(e => e.by === user.name);
+        data.slice().reverse().forEach(e => {
+            const dt = new Date(e.date);
+            if(dt.toLocaleDateString() === today) { if(e.type==='income') di+=e.amt; else de+=e.amt; }
+            if(e.type==='income') { tb+=e.amt; mi+=e.amt; } else { tb-=e.amt; me+=e.amt; }
+            list.innerHTML += `<div class="p-3 border-bottom d-flex justify-content-between"><span><b>${e.desc}</b><br><small>${e.by}</small></span><span class="${e.type==='income'?'text-success':'text-danger'} fw-bold">₹${e.amt}</span></div>`;
+        });
+        document.getElementById('dInc').innerText = "₹" + di; document.getElementById('dExp').innerText = "₹" + de; document.getElementById('tBal').innerText = "₹" + tb; document.getElementById('mProf').innerText = "₹" + (mi - me);
+        renderChart(mi, me);
+    }
+
+    function renderChart(i, e) {
+        const ctx = document.getElementById('ledgerChart'); if(chartObj) chartObj.destroy();
+        chartObj = new Chart(ctx, { type:'bar', data:{ labels:['Income','Expense'], datasets:[{ data:[i,e], backgroundColor:['#2ecc71','#e74c3c'], borderRadius:10 }] }, options:{plugins:{legend:{display:false}}} });
+    }
+
+    function addStaff() {
+        const u = document.getElementById('sUser').value, p = document.getElementById('sPass').value;
+        if(!u || !p) return; currentCo.staff.push({user:u, pass:p}); save(); renderStaff();
+        document.getElementById('sUser').value = ''; document.getElementById('sPass').value = '';
+    }
+
+    function renderStaff() {
+        const tb = document.getElementById('staffTable'); tb.innerHTML = '';
+        currentCo.staff.forEach((s,i) => { tb.innerHTML += `<tr><td><b>${s.user}</b></td><td><button class="btn btn-outline-danger btn-sm" onclick="delStaff(${i})">Delete</button></td></tr>`; });
+    }
+
+    function delStaff(i) { currentCo.staff.splice(i,1); save(); renderStaff(); }
+    function save() { const i = companies.findIndex(c => c.id === currentCo.id); companies[i] = currentCo; localStorage.setItem('hc_saas_final_db', JSON.stringify(companies)); }
+    function exportExcel() { const ws = XLSX.utils.json_to_sheet(currentCo.entries); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Ledger"); XLSX.writeFile(wb, `${currentCo.name}_Report.xlsx`); }
+    function logout() { location.reload(); }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
